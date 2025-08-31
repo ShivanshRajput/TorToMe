@@ -1,5 +1,5 @@
 #include <iostream>
 int main() {
-    std::cout << "Torrent CLI starting...\n";
+    std::cout << "TorToMe CLI starting...\n";
     return 0;
 }
