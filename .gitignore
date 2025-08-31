@@ -1,0 +1,24 @@
+# Build artifacts
+build/
+*.o
+*.a
+*.so
+torrent-cli  # The compiled executable
+
+# Editor and IDE files
+.vscode/
+*.code-workspace
+.idea/
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Dependency directories (if you add external libs later)
+deps/
+vendor/
