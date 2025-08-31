@@ -1,20 +1,38 @@
-cmake_minimum_required(VERSION 3.10)
-project(TorrentCLI)
+cmake_minimum_required(VERSION 3.12)
+project(TorToMe CXX)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find pkg-config
-find_package(PkgConfig REQUIRED)
+# Boost (program_options)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
-# Find libtorrent-rasterbar using pkg-config
+# libtorrent-rasterbar via pkg-config (portable across many distros)
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBTORRENT REQUIRED libtorrent-rasterbar)
 
-# Find Boost
-find_package(Boost REQUIRED COMPONENTS program_options filesystem)
+add_executable(torrent_cli
+    src/main.cpp
+    src/config.cpp
+    src/display.cpp
+    src/torrent_engine.cpp
+)
 
-# Add executable
-add_executable(torrent-cli src/main.cpp src/config.cpp src/torrent_engine.cpp src/display.cpp)
+target_include_directories(torrent_cli
+    PRIVATE
+        ${Boost_INCLUDE_DIRS}
+        ${LIBTORRENT_INCLUDE_DIRS}
+        ${CMAKE_SOURCE_DIR}/src
+)
 
-# Link libraries
-target_include_directories(torrent-cli PRIVATE ${LIBTORRENT_INCLUDE_DIRS})
-target_link_libraries(torrent-cli PRIVATE ${LIBTORRENT_LIBRARIES} Boost::program_options Boost::filesystem pthread)
+target_link_directories(torrent_cli PRIVATE ${LIBTORRENT_LIBRARY_DIRS})
+
+target_link_libraries(torrent_cli
+    PRIVATE
+        ${Boost_LIBRARIES}
+        ${LIBTORRENT_LIBRARIES}
+)
+
+# Prefer -pthread if needed
+find_package(Threads REQUIRED)
+target_link_libraries(torrent_cli PRIVATE Threads::Threads)

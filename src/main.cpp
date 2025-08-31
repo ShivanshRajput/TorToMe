@@ -1,48 +1,65 @@
 #include <boost/program_options.hpp>
-#include <iostream>
-#include "config.h"
 #include <filesystem>
+#include <iostream>
+
+#include "config.h"
+#include "torrent_engine.h"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
-    po::options_description desc("Options");
+    // Options
+    po::options_description desc("TorToMe options");
     desc.add_options()
         ("help,h", "Show help")
-        ("url,u", po::value<std::string>(), "Magnet link")
-        ("ulimit", po::value<int>()->default_value(0), "Upload limit (KB/s)")
-        ("dlimit", po::value<int>()->default_value(0), "Download limit (KB/s)")
-        ("path,p", po::value<std::string>(), "Download path");
+        ("url,u", po::value<std::string>()->value_name("MAGNET")->required(), "Magnet link")
+        ("ulimit", po::value<int>()->default_value(0), "Upload limit (kB/s)")
+        ("dlimit", po::value<int>()->default_value(0), "Download limit (kB/s)")
+        ("path,p", po::value<std::string>()->default_value(""), "Download path")
+        ("verbose,v", "Verbose (peer list)");
 
     po::variables_map vm;
     try {
         po::store(po::parse_command_line(argc, argv, desc), vm);
+
+        if (vm.count("help")) {
+            std::cout << desc << '\n';
+            return 0;
+        }
+
         po::notify(vm);
-    } catch (const po::error& e) {
-        std::cerr << "Error parsing arguments: " << e.what() << "\n";
-        std::cout << desc << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "Arg error: " << e.what() << "\n\n" << desc << '\n';
         return 1;
     }
 
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
-        return 0;
+    // Compute default path relative to build/run dir's parent
+    std::string project_root;
+    try {
+        project_root = fs::current_path().parent_path().string();
+    } catch (...) {
+        project_root = ".";
     }
-
-    // Compute project root dynamically using current_path (build/), parent is root
-    std::string project_root = fs::current_path().parent_path().string();
     std::string default_download_path = project_root + "/downloads";
 
-    std::string user_path = vm.count("path") ? vm["path"].as<std::string>() : "";
+    std::string user_path = vm["path"].as<std::string>();
     std::string download_path = get_download_path(user_path, default_download_path);
-    std::cout << "Download path set to: " << download_path << "\n";
+    std::cout << "Download path: " << download_path << '\n';
 
-    // Check space (1MB for testing)
-    if (!check_space(download_path, 1'000'000)) {
+    if (!check_space(download_path, 0)) {
         return 1;
     }
 
-    std::cout << "Torrent CLI starting...\n";
+    EngineOptions opts;
+    opts.magnet_uri = vm["url"].as<std::string>();
+    opts.save_path = download_path;
+    opts.ulimit_kBps = vm["ulimit"].as<int>();
+    opts.dlimit_kBps = vm["dlimit"].as<int>();
+    opts.verbose = vm.count("verbose") > 0;
+
+    TorrentEngine engine(opts);
+    if (!engine.start()) return 1;
+    engine.loop();
     return 0;
 }
