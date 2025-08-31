@@ -1,15 +1,11 @@
 #ifndef TORRENT_ENGINE_H
 #define TORRENT_ENGINE_H
 
+#include <string>
 #include <atomic>
 #include <memory>
-#include <string>
-#include <vector>
 
-#include <libtorrent/session.hpp>
-#include <libtorrent/torrent_handle.hpp>
-#include <libtorrent/alert.hpp>
-
+// EngineOptions used by main to configure engine
 struct EngineOptions {
     int ulimit_kBps = 0;
     int dlimit_kBps = 0;
@@ -23,19 +19,18 @@ public:
     explicit TorrentEngine(const EngineOptions& opts);
     ~TorrentEngine();
 
-    bool start();  // add magnet, start session
-    void loop();   // main loop until finished or interrupted
+    // Add magnet and initialize; returns true on success
+    bool start();
+
+    // Block until finished (handles display updates itself)
+    void loop();
+
+    // Stop and cleanup early
     void stop();
 
 private:
-    EngineOptions opts_;
-    std::unique_ptr<libtorrent::session> ses_;
-    libtorrent::torrent_handle th_;
-    std::atomic<bool> running_{true};
-
-    void apply_rate_limits();
-    bool add_magnet();
-    void handle_alerts(std::vector<libtorrent::alert*>& alerts);
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
-#endif
+#endif // TORRENT_ENGINE_H
