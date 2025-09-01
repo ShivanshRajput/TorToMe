@@ -26,10 +26,7 @@ This repository contains the source code and a simple CMake-based build setup.
 3. [Clone / Fork](#clone--fork)
 4. [Build instructions (CMake)](#build-instructions-cmake)
 5. [Run / Usage examples](#run--usage-examples)
-6. [Troubleshooting](#troubleshooting)
-7. [Packaging & distribution suggestions](#packaging--distribution-suggestions)
-8. [Contributing](#contributing)
-9. [License](#license)
+6. [License](#license)
 
 ---
 
